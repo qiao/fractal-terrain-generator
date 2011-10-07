@@ -17,12 +17,17 @@ function init() {
     // setup scene
     scene = new THREE.Scene();
     
+    
     // setup renderer
-    renderer = new THREE.WebGLRenderer({ 
-        clearColor: 0x000000, 
-        clearAlpha: 1, 
-        antialias: true 
-    });
+    if (!Detector.webgl) {
+        renderer = new THREE.CanvasRenderer();
+    } else {
+        renderer = new THREE.WebGLRenderer({ 
+            clearColor: 0x000000, 
+            clearAlpha: 1, 
+            antialias: true 
+        });
+    }
     renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 
     // create graphic container and attach the renderer to it
@@ -102,10 +107,6 @@ function setTerrainModel(terrainModel) {
 
 window.onload = function () {
 
-    if (!Detector.webgl) {
-        Detector.addGetWebGLMessage();
-        return;
-    }
 
     init();
     //setupLights();
