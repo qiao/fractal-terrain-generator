@@ -1,5 +1,5 @@
 var renderer, scene, camera,
-    terrain,
+    terrain, mesh,
     SCREEN_WIDTH = window.innerWidth,
     SCREEN_HEIGHT = window.innerHeight,
     
@@ -12,9 +12,8 @@ function init() {
                               SCREEN_WIDTH / SCREEN_HEIGHT, 
                               1,
                               5000);
-    camera.position.set(500, 100, 400);
+    camera.position.y = 300;
     camera.lookAt(new THREE.Vector3(0, 0, 0));
-    camera.translate(100, new THREE.Vector3(0, 1, 0));
 
     // setup scene
     scene = new THREE.Scene();
@@ -33,6 +32,7 @@ function init() {
     container.appendChild(renderer.domElement);
 }
 
+/*
 function setupLights() {
     var ambient_light, main_light;
 
@@ -44,6 +44,7 @@ function setupLights() {
     main_light.castShadow = true;
     scene.add(main_light);
 }
+*/
 
 
 function getTerrainMesh(params) {
@@ -64,9 +65,13 @@ function getTerrainMesh(params) {
 
 
 function animate(update) {
-    // continue the animation if there are branches not drawn
+    var timer = new Date().getTime() * 0.0001;
+    camera.position.x = Math.cos(timer) * 800;
+    camera.position.z = Math.sin(timer) * 800;
+    camera.lookAt(scene.position);
+
+
     requestAnimationFrame(animate, 30);
-    renderer.clear();
     renderer.render(scene, camera);
 }
 
@@ -75,6 +80,7 @@ function setTerrainModel(terrainModel) {
     var i, j;
     window.vertices = vertices;
 }
+
 
 window.onload = function () {
 
@@ -85,9 +91,7 @@ window.onload = function () {
 
     init();
 
-    setupLights();
-
-
+    //setupLights();
 
     var i, j;
 
@@ -97,7 +101,7 @@ window.onload = function () {
     });
     vertices = terrain.geometry.vertices;
 
-    terrainModel = generateTerrain(5);
+    terrainModel = generateTerrain(32);
     window.terrainModel = terrainModel;
     for (i = 0; i < terrainModel.length; ++i) {
         for (j = 0; j < terrainModel.length; ++j) {
