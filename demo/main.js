@@ -12,8 +12,7 @@ function init() {
                               SCREEN_WIDTH / SCREEN_HEIGHT, 
                               1,
                               5000);
-    camera.position.y = 300;
-    camera.lookAt(new THREE.Vector3(0, 0, 0));
+    camera.position.y = 400;
 
     // setup scene
     scene = new THREE.Scene();
@@ -47,12 +46,14 @@ function setupLights() {
 */
 
 
-function getTerrainMesh(params) {
-    var size = params.size || 500,
-        numSegs = params.numSegs || 25;
+function getTerrainMesh(model, maxHeight) {
+    var segLength, size, vertices, i, j;
+    
+    segLength = 20;
+    size = (model.length - 1) * segLength;
 
     terrain = new THREE.Mesh(
-        new THREE.PlaneGeometry(size, size, size / numSegs, size / numSegs),
+        new THREE.PlaneGeometry(size, size, model.length - 1, model.length - 1),
         new THREE.MeshLambertMaterial({ 
             color: 0xaaaaaa, 
             wireframe: true,
@@ -60,17 +61,35 @@ function getTerrainMesh(params) {
         })
     );
     terrain.rotation.x = -PI / 2;
+
+    vertices = terrain.geometry.vertices;
+    for (i = 0; i < model.length; ++i) {
+        for (j = 0; j < model.length; ++j) {
+            vertices[i * model.length + j].position.z = model[i][j] * maxHeight;
+        }
+    }
+
     return terrain;
 }
 
+
+// NOTE: Size must be power of 2
+function drawTerrain(size, maxHeight, scale) {
+    var mesh, vertices, model;
+
+    model = generateTerrain(size);
+    mesh = getTerrainMesh(model, maxHeight);
+    mesh.scale = new THREE.Vector3(scale, scale, scale);
+
+    scene.add(terrain);
+}
 
 function animate(update) {
     var timer = new Date().getTime() * 0.0001;
     camera.position.x = Math.cos(timer) * 800;
     camera.position.z = Math.sin(timer) * 800;
     camera.lookAt(scene.position);
-
-
+    
     requestAnimationFrame(animate, 30);
     renderer.render(scene, camera);
 }
@@ -78,7 +97,6 @@ function animate(update) {
 
 function setTerrainModel(terrainModel) {
     var i, j;
-    window.vertices = vertices;
 }
 
 
@@ -90,26 +108,8 @@ window.onload = function () {
     }
 
     init();
-
     //setupLights();
-
-    var i, j;
-
-    mesh = getTerrainMesh({
-        size: 640,
-        numSegs: 20,
-    });
-    vertices = terrain.geometry.vertices;
-
-    terrainModel = generateTerrain(32);
-    window.terrainModel = terrainModel;
-    for (i = 0; i < terrainModel.length; ++i) {
-        for (j = 0; j < terrainModel.length; ++j) {
-            vertices[i * terrainModel.length + j].position.z = terrainModel[i][j] * 200;
-        }
-    }
-
-    scene.add(terrain);
+    drawTerrain(32, 200, 1.0);
 
     animate();
 };
