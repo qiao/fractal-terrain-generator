@@ -1,4 +1,5 @@
 var renderer, scene, camera,
+    terrain,
     SCREEN_WIDTH = window.innerWidth,
     SCREEN_HEIGHT = window.innerHeight,
     
@@ -7,17 +8,17 @@ var renderer, scene, camera,
 function init() {
 
     // set up camera
-    camera = new THREE.OrthographicCamera(45,                     
+    camera = new THREE.PerspectiveCamera(45,                     
                               SCREEN_WIDTH / SCREEN_HEIGHT, 
                               1,
                               5000);
     camera.position.set(500, 100, 400);
-    camera.translate(200, new THREE.Vector3(0, 1, 0));
+    camera.lookAt(new THREE.Vector3(0, 0, 0));
+    camera.translate(100, new THREE.Vector3(0, 1, 0));
 
     // setup scene
     scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x000000, 500, 1500);
-
+    
     // setup renderer
     renderer = new THREE.WebGLRenderer({ 
         clearColor: 0x000000, 
@@ -25,19 +26,6 @@ function init() {
         antialias: true 
     });
     renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-
-    renderer.setClearColor(scene.fog.color, 1);
-    renderer.autoClear = false;
-
-    renderer.shadowCameraNear = 3;
-    renderer.shadowCameraFar = camera.far;
-    renderer.shadowCameraFov = 50;
-
-    renderer.shadowMapBias = 0.0039;
-    renderer.shadowMapDarkness = 0.5;
-
-    renderer.shadowMapEnabled = true;
-    renderer.shadowMapSoft = true;
 
     // create graphic container and attach the renderer to it
     container = document.createElement("div");
@@ -58,28 +46,35 @@ function setupLights() {
 }
 
 
-function drawGround() {
-    var ground = new THREE.Mesh(
-        new THREE.PlaneGeometry(500, 500),
-        new THREE.MeshLambertMaterial({ color: 0x777777, wireframe: true })
+function getTerrainMesh(params) {
+    var size = params.size || 500,
+        numSegs = params.numSegs || 25;
+
+    terrain = new THREE.Mesh(
+        new THREE.PlaneGeometry(size, size, size / numSegs, size / numSegs),
+        new THREE.MeshLambertMaterial({ 
+            color: 0xaaaaaa, 
+            wireframe: true,
+            wireframeLinewidth: 1,
+        })
     );
-    ground.rotation.x = - PI / 2;
-    ground.scale.set(100, 100, 100);
-
-    ground.castShadow = false;
-    ground.receiveShadow = true;
-
-    scene.add(ground);
+    terrain.rotation.x = -PI / 2;
+    return terrain;
 }
 
 
 function animate(update) {
     // continue the animation if there are branches not drawn
-    requestAnimationFrame(animate);
+    requestAnimationFrame(animate, 30);
     renderer.clear();
     renderer.render(scene, camera);
 }
 
+
+function setTerrainModel(terrainModel) {
+    var i, j;
+    window.vertices = vertices;
+}
 
 window.onload = function () {
 
@@ -91,6 +86,26 @@ window.onload = function () {
     init();
 
     setupLights();
-    drawGround();
+
+
+
+    var i, j;
+
+    mesh = getTerrainMesh({
+        size: 640,
+        numSegs: 20,
+    });
+    vertices = terrain.geometry.vertices;
+
+    terrainModel = generateTerrain(5);
+    window.terrainModel = terrainModel;
+    for (i = 0; i < terrainModel.length; ++i) {
+        for (j = 0; j < terrainModel.length; ++j) {
+            vertices[i * terrainModel.length + j].position.z = terrainModel[i][j] * 200;
+        }
+    }
+
+    scene.add(terrain);
+
     animate();
 };
