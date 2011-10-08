@@ -12,8 +12,8 @@ var generateTerrain = (function() {
      * @param {number} height - Height of rectangle.
      * @param {number} smoothness - Higher this value, smoother the terrain.
      *      recommended value is 1.
-     * @return {Array.<Array.<int>>} A two-dimensional array holding the heights 
-     *     of the vertices of the terrain. Each height will be between -1 and 1.
+     * @return {Array.<Array.<int>>} A two-dimensional array holding the elevations 
+     *     of the vertices of the terrain. Each elevation will be between -1 and 1.
      */
     function generateTerrain(width, height, smoothness) {
         var max, size, squareTerrain, i, j;
@@ -39,8 +39,8 @@ var generateTerrain = (function() {
      * @param {number} size - Size of terrain, MUST be a power of 2.
      * @param {number} smoothness - Higher this value, smoother the terrain.
      *      recommended value is 1.
-     * @return {Array.<Array.<int>>} A two-dimensional array holding the heights 
-     *     of the vertices of the terrain. Each height will be between -1 and 1.
+     * @return {Array.<Array.<int>>} A two-dimensional array holding the elevations 
+     *     of the vertices of the terrain. Each elevation will be between -1 and 1.
      */
     function generateSquareTerrain(size, smoothness) {
         if (size & (size - 1)) {
