@@ -7,14 +7,42 @@
 var generateTerrain = (function() {
 
     /**
-     * Generate fractal terrain
+     * Generate fractal terrain.
+     * @param {number} width - Width of rectangle.
+     * @param {number} height - Height of rectangle.
+     * @param {number} smoothness - Higher this value, smoother the terrain.
+     *      recommended value is 1.
+     * @return {Array.<Array.<int>>} A two-dimensional array holding the heights 
+     *     of the vertices of the terrain. Each height will be between -1 and 1.
+     */
+    function generateTerrain(width, height, smoothness) {
+        var max, size, squareTerrain, i, j;
+
+        max = Math.max(width, height);
+        size = 1;
+        while (size < max) {
+            size <<= 1;
+        }
+
+        squareTerrain = generateSquareTerrain(size, smoothness);
+        terrain = [];
+        // terrain is a matrix of size (width + 1) x (height + 1)
+        for (i = 0; i <= height; ++i) {
+            terrain.push(squareTerrain[i].slice(0, width + 1));
+        }
+
+        return terrain;
+    }
+
+    /**
+     * Generate a square fractal terrain.
      * @param {number} size - Size of terrain, MUST be a power of 2.
      * @param {number} smoothness - Higher this value, smoother the terrain.
      *      recommended value is 1.
      * @return {Array.<Array.<int>>} A two-dimensional array holding the heights 
-     *     of the vertices of the terrain. Each height will be between 0 and 1.
+     *     of the vertices of the terrain. Each height will be between -1 and 1.
      */
-    function generateTerrain(size, smoothness) {
+    function generateSquareTerrain(size, smoothness) {
         if (size & (size - 1)) {
             throw new Error('Expected terrain size to be a power of 2, received ' + 
                             size + ' instead.');
