@@ -16,7 +16,6 @@ function init() {
     // setup scene
     scene = new THREE.Scene();
     
-    
     // setup renderer
     if (!Detector.webgl) {
         renderer = new THREE.CanvasRenderer();
@@ -28,21 +27,36 @@ function init() {
         });
     }
     renderer.setSize(width, height);
+    
+    renderer.shadowCameraNear = 3;
+    renderer.shadowCameraFar = camera.far;
+    renderer.shadowCameraFov = 50;
+
+    renderer.shadowMapBias = 0.0039;
+    renderer.shadowMapDarkness = 0.5;
+
+    renderer.shadowMapEnabled = true;
+    renderer.shadowMapSoft = true;
+
 
     // create graphic container and attach the renderer to it
     $container.append(renderer.domElement);
 }
 
 function setupLights() {
-    var ambient_light, main_light;
+    var ambientLight, mainLight, auxLight;
+    ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+    scene.add(ambientLight);
 
-    ambient_light = new THREE.AmbientLight(0x555555);
-    scene.add(ambient_light);
+    mainLight = new THREE.SpotLight(0xffffff, 0.5);
+    mainLight.position.set(500, 500, 500);
+    mainLight.castShadow = true;
+    scene.add(mainLight);
 
-    main_light = new THREE.SpotLight(0xffffff);
-    main_light.position.set(0, 1000, 1000);
-    main_light.castShadow = true;
-    scene.add(main_light);
+    auxLight = new THREE.SpotLight(0xffffff, 0.3);
+    auxLight.position.set(-500, 500, -500);
+    auxLight.castShadow = true;
+    scene.add(auxLight);
 }
 
 
@@ -55,12 +69,13 @@ function getTerrainMesh(model, maxHeight) {
     terrain = new THREE.Mesh(
         new THREE.PlaneGeometry(size, size, model.length - 1, model.length - 1),
         new THREE.MeshLambertMaterial({ 
-            color: 0xaaaaaa, 
-            wireframe: true,
-            wireframeLinewidth: 1,
+            color: 0x333333, 
+            wireframe: false,
         })
     );
     terrain.rotation.x = -PI / 2;
+    terrain.castShadow = true;
+    terrain.receiveShadow = true;
 
     vertices = terrain.geometry.vertices;
     for (i = 0; i < model.length; ++i) {
@@ -103,13 +118,47 @@ function animate(interval) {
 }
 
 
+function drawCoordinate(center, length) {
+    var othorgonals = [
+        [new THREE.Vector3(length, 0, 0), 0xff0000],
+        [new THREE.Vector3(0, length, 0), 0x00ff00],
+        [new THREE.Vector3(0, 0, length), 0x0000ff]
+    ];
+
+    for (var i = 0; i < othorgonals.length; ++i) {
+        var v = othorgonals[i][0],
+            color = othorgonals[i][1];
+
+        var geometry = new THREE.Geometry();
+
+        geometry.vertices.push(new THREE.Vertex(center));
+        geometry.vertices.push(new THREE.Vertex(center.clone().addSelf(v)));
+
+        var line = new THREE.Line(
+            geometry, 
+
+            new THREE.LineBasicMaterial({
+                color: color, 
+                opacity: 1, 
+                linewidth: 3
+            })
+        );
+
+        scene.add(line);
+    }
+}
+
+
+
 
 $(function() {
     init();
-    //setupLights();
+    setupLights();
 
-    var terrainWidth = 32,
-        terrainHeight = 32,
+    drawCoordinate(new THREE.Vector3(0, 0, 0), 300);
+
+    var terrainWidth = 64,
+        terrainHeight = 64,
         smoothness = 1,
         maxHeight = getOptimalHeight(Math.max(terrainWidth, terrainHeight)),
         scale = getOptimalScale(Math.max(terrainWidth, terrainHeight));
