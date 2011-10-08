@@ -74,14 +74,22 @@ function getTerrainMesh(model, maxHeight) {
 
 
 // NOTE: Size must be power of 2
-function drawTerrain(size, maxHeight, scale) {
+function drawTerrain(size, smoothness, maxHeight, scale) {
     var mesh, vertices, model;
 
-    model = generateTerrain(size);
+    model = generateTerrain(size, smoothness);
     mesh = getTerrainMesh(model, maxHeight);
     mesh.scale = new THREE.Vector3(scale, scale, scale);
 
     scene.add(terrain);
+}
+
+function getOptimalScale(terrainSize) {
+    return 30 / terrainSize;
+}
+
+function getOptimalHeight(terrainSize) {
+    return terrainSize / 32 * 200;
 }
 
 function animate(interval) {
@@ -99,7 +107,13 @@ function animate(interval) {
 $(function() {
     init();
     //setupLights();
-    drawTerrain(32, 200, 1.0);
+
+    var terrainSize = 32,
+        smoothness = 1,
+        maxHeight = getOptimalHeight(terrainSize),
+        scale = getOptimalScale(terrainSize);
+
+    drawTerrain(terrainSize, smoothness, maxHeight, scale);
 
     animate(30);
 });

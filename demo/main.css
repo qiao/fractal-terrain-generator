@@ -8,13 +8,9 @@ html, body {
 }
 
 #sidebar {
-    background: #333;
-    width: 250px;
-    float: left;
-    height: 100%;
 }
 
 #container {
-    margin-left: 250px;
+    width: 100%;
     height: 100%;
 }
