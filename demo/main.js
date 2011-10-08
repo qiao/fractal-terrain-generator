@@ -87,13 +87,13 @@ function drawTerrain(size, maxHeight, scale) {
     scene.add(terrain);
 }
 
-function animate(update) {
+function animate(interval) {
     var timer = new Date().getTime() * 0.0001;
     camera.position.x = Math.cos(timer) * 800;
     camera.position.z = Math.sin(timer) * 800;
     camera.lookAt(scene.position);
     
-    requestAnimationFrame(animate, 30);
+    requestAnimationFrame(animate, interval);
     renderer.render(scene, camera);
 }
 
@@ -104,5 +104,5 @@ window.onload = function () {
     //setupLights();
     drawTerrain(32, 200, 1.0);
 
-    animate();
+    animate(30);
 };
