@@ -1,15 +1,14 @@
 var renderer, scene, camera,
-    terrain, mesh,
-    SCREEN_WIDTH = window.innerWidth,
-    SCREEN_HEIGHT = window.innerHeight,
-    
     PI = Math.PI;
 
 function init() {
+    var $container = $("#container"),
+        width = $container.width(),
+        height = $container.height();
 
     // set up camera
     camera = new THREE.PerspectiveCamera(45,                     
-                              SCREEN_WIDTH / SCREEN_HEIGHT, 
+                              width / height, 
                               1,
                               5000);
     camera.position.y = 400;
@@ -28,12 +27,10 @@ function init() {
             antialias: true 
         });
     }
-    renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+    renderer.setSize(width, height);
 
     // create graphic container and attach the renderer to it
-    container = document.createElement("div");
-    document.body.appendChild(container);
-    container.appendChild(renderer.domElement);
+    $container.append(renderer.domElement);
 }
 
 function setupLights() {
@@ -99,10 +96,10 @@ function animate(interval) {
 
 
 
-window.onload = function () {
+$(function() {
     init();
     //setupLights();
     drawTerrain(32, 200, 1.0);
 
     animate(30);
-};
+});
