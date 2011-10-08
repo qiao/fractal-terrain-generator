@@ -36,7 +36,6 @@ function init() {
     container.appendChild(renderer.domElement);
 }
 
-/*
 function setupLights() {
     var ambient_light, main_light;
 
@@ -48,7 +47,6 @@ function setupLights() {
     main_light.castShadow = true;
     scene.add(main_light);
 }
-*/
 
 
 function getTerrainMesh(model, maxHeight) {
@@ -100,14 +98,8 @@ function animate(update) {
 }
 
 
-function setTerrainModel(terrainModel) {
-    var i, j;
-}
-
 
 window.onload = function () {
-
-
     init();
     //setupLights();
     drawTerrain(32, 200, 1.0);
