@@ -1,6 +1,6 @@
 /**
  * @fileoverview Random fractal terrain generator.
- * This program adopts Paul Martz's Diamond-Square algorithm. 
+ * This program is based on the Diamond-Square algorithm. 
  * Check out http://gameprogrammer.com/fractal.html for a detailed description.
  * @author Xueqiao Xu <xueqiaoxu@gmail.com>
  */
