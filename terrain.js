@@ -10,16 +10,18 @@
     /**
      * Generate fractal terrain
      * @param {number} size - Size of terrain, MUST be a power of 2.
+     * @param {number} smoothness - Higher this value, smoother the terrain.
+     *      recommended value is 1.
      * @return {Array.<Array.<int>>} A two-dimensional array holding the heights 
      *     of the vertices of the terrain. Each height will be between 0 and 1.
      */
-    function generateTerrain(size) {
+    function generateTerrain(size, smoothness) {
         if (size & (size - 1)) {
             throw new Error('Expected terrain size to be a power of 2, received ' + 
                             size + ' instead.');
         }
         var mat = generateMatrix(size);
-        iterate(mat);
+        iterate(mat, smoothness);
         return mat;
     }
 
@@ -47,24 +49,26 @@
     /**
      * Iterate on the matrix using Diamond-Square algorithm.
      * @param {Array.<Array.<int>>} matrix - Matrix to be iterated on.
+     * @param {number} smoothness - Smoothness of terrain.
      */
-    function iterate(matrix) {
+    function iterate(matrix, smoothness) {
         var current = 0,
             depth = Math.log(matrix.length - 1) / Math.log(2);
 
         while (current++ < depth) {
-            diamond(matrix, current);
-            square(matrix, current);
+            diamond(matrix, current, smoothness);
+            square(matrix, current, smoothness);
         }
     }
 
 
     /**
      * Diamond step of iteration.
-     * @param {Array.<Array.<int>>} matrix - Matrix to be iterated on.
-     * @param {number} depth - Depth of current iteration(starts from 1)
+     * @param {Array.<Array.<int>>} matrix - Matrix to iterate on.
+     * @param {number} depth - Depth of current iteration(starts from 1).
+     * @param {number} smoothness - Smoothness of terrain.
      */
-    function diamond(matrix, depth) {
+    function diamond(matrix, depth, smoothness) {
         var matSize, numSegs, span, 
             i, j, x, y,
             heights, 
@@ -110,7 +114,7 @@
                 avg = average(heights);
 
                 // random offset
-                offset = getH(1, depth);
+                offset = getH(smoothness, depth);
 
                 // set center height
                 matrix[ve[1]][ve[0]] = avg + offset;
@@ -121,10 +125,11 @@
 
     /**
      * Square step of iteration.
-     * @param {Array.<Array.<int>>} matrix - Matrix to be iterated on.
-     * @param {number} depth - Depth of current iteration(starts from 1)
+     * @param {Array.<Array.<int>>} matrix - Matrix to iterate on.
+     * @param {number} depth - Depth of current iteration(starts from 1).
+     * @param {number} smoothness - Smoothness of terrain.
      */
-    function square(matrix, depth) {
+    function square(matrix, depth, smoothness) {
         var matSize, numSegs, span, 
             i, j, x, y,
             va, vb, vc, vd, vf, vg, vh, vi;
@@ -176,23 +181,23 @@
                 vq = [x + span / 2, (y + span / 2 * 3) % matrix.length]; // under l
                 vv = [x + span / 2, (y - span / 2 + matrix.length) % matrix.length]; // above b
 
-                squareHelper(matrix, depth, va, vg, vk, vj, vf);
-                squareHelper(matrix, depth, va, vv, vc, vg, vb);
-                squareHelper(matrix, depth, vc, vi, vm, vg, vh);
-                squareHelper(matrix, depth, vk, vg, vm, vq, vl);
+                squareHelper(matrix, depth, smoothness, va, vg, vk, vj, vf);
+                squareHelper(matrix, depth, smoothness, va, vv, vc, vg, vb);
+                squareHelper(matrix, depth, smoothness, vc, vi, vm, vg, vh);
+                squareHelper(matrix, depth, smoothness, vk, vg, vm, vq, vl);
 
             }
         }
     }
 
-    function squareHelper(matrix, depth, a, b, c, d, t) {
+    function squareHelper(matrix, depth, smoothness, a, b, c, d, t) {
         var heights, avg, offset;
 
         heights = [a, b, c, d].map(function(v) {
             return matrix[v[1]][v[0]];
         });
         avg = average(heights);
-        offset = getH(1, depth);
+        offset = getH(smoothness, depth);
         matrix[t[1]][t[0]] = avg + offset;
     }
 
