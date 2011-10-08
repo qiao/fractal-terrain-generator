@@ -9,11 +9,15 @@
 
     /**
      * Generate fractal terrain
-     * @param {number} size - Size of terrain, MUST be power of 2.
+     * @param {number} size - Size of terrain, MUST be a power of 2.
      * @return {Array.<Array.<int>>} A two-dimensional array holding the heights 
      *     of the vertices of the terrain. Each height will be between 0 and 1.
      */
     function generateTerrain(size) {
+        if (size & (size - 1)) {
+            throw new Error('Expected terrain size to be a power of 2, received ' + 
+                            size + ' instead.');
+        }
         var mat = generateMatrix(size);
         iterate(mat);
         return mat;
