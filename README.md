@@ -8,12 +8,13 @@ This program is based on the Diamond-Square algorithm. Check out http://gameprog
 ## Usage ##
 
 ```javascript
-var terrain = generateTerrain(32, 1.0);
+var terrain = generateTerrain(32, 32, 1.0);
 ```
 
-`generateTerrain` receives two parameters:
+`generateTerrain` receives three parameters:
 
-* `size`: The number of segments for each side of the terrain. The value MUST be a power of 2.
+* `width`: Segments of the width of the terrain.
+* `height`: Segments of the height of the terrain.
 * `smoothness`: Smoothness of the terrain. Higher this value, smoother the terrain will be. Recommended value is 1.
 
-The result `terrain` will be a (size + 1) x (size + 1) square matrix containing the heights of each vertex. And each height will be between 0 and 1.
+The result `terrain` will be a (width + 1) x (height + 1) 2-dimensional array containing the heights of each vertex. And each height will be between -1 and 1.
