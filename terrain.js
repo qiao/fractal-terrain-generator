@@ -4,8 +4,7 @@
  * Check out http://gameprogrammer.com/fractal.html for a detailed description.
  * @author Xueqiao Xu <xueqiaoxu@gmail.com>
  */
-
-(function(window) {
+var generateTerrain = (function() {
 
     /**
      * Generate fractal terrain
@@ -231,6 +230,6 @@
 
 
     // export to global
-    window.generateTerrain = generateTerrain;
+    return generateTerrain;
 
-})(window);
+})();
