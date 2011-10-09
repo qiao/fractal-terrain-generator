@@ -21,7 +21,7 @@ function init() {
         renderer = new THREE.CanvasRenderer();
     } else {
         renderer = new THREE.WebGLRenderer({ 
-            clearColor: 0x000000, 
+            clearColor: 0x222222,
             clearAlpha: 1, 
             antialias: true 
         });
@@ -38,7 +38,6 @@ function init() {
     renderer.shadowMapEnabled = true;
     renderer.shadowMapSoft = true;
 
-
     // create graphic container and attach the renderer to it
     $container.append(renderer.domElement);
 }
@@ -54,57 +53,127 @@ function setupLights() {
     scene.add(mainLight);
 
     auxLight = new THREE.SpotLight(0xffffff, 0.3);
-    auxLight.position.set(-500, 500, -500);
+    auxLight.position.set(-300, 500, -400);
     auxLight.castShadow = true;
     scene.add(auxLight);
 }
 
 
 function getTerrainMesh(model, maxHeight) {
-    var segLength, size, vertices, i, j;
+    var modelWidth, modelHeight, segLength, 
+        size, vertices, texture, i, j;
     
-    segLength = 20;
-    size = (model.length - 1) * segLength;
+    modelWidth = model[0].length - 1; 
+    modelHeight = model.length - 1;
 
-    terrain = new THREE.Mesh(
-        new THREE.PlaneGeometry(size, size, model.length - 1, model.length - 1),
+    segLength = getOptimalSegLength(Math.max(modelWidth, modelHeight));
+
+    height = (model.length - 1) * segLength;
+    width = (model[0].length - 1) * segLength;
+
+    texture = getTexture(model, width, height);
+
+    mesh = new THREE.Mesh(
+        new THREE.PlaneGeometry(width, height, model.length - 1, model.length - 1),
+        //new THREE.MeshBasicMaterial({
+            //map: texture
+        //})
         new THREE.MeshLambertMaterial({ 
-            color: 0x333333, 
-            wireframe: false,
+            color: 0x777777, 
+            wireframe: true,
         })
     );
-    terrain.rotation.x = -PI / 2;
-    terrain.castShadow = true;
-    terrain.receiveShadow = true;
+    mesh.rotation.x = -PI / 2;
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
 
-    vertices = terrain.geometry.vertices;
+    vertices = mesh.geometry.vertices;
     for (i = 0; i < model.length; ++i) {
         for (j = 0; j < model.length; ++j) {
             vertices[i * model.length + j].position.z = model[i][j] * maxHeight;
         }
     }
 
-    return terrain;
+    return mesh;
 }
 
 
-// NOTE: Size must be power of 2
-function drawTerrain(width, height, smoothness, maxHeight, scale) {
+// TODO: use bitmap textures and texture blending
+function getTexture(model, width, height) {
+    var canvas, context, 
+        modelWidth, modelHeight,
+        ratio,
+        texture, imageData, pixels, 
+        rgba,
+        i, j, y, x, yy, xx;
+
+    modelWidth = model[0].length - 1;
+    modelHeight = model.length;
+
+    ratio = width / modelWidth;
+
+    // generate canvas
+    canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    console.log(width / modelWidth)
+
+    // get context
+    context = canvas.getContext('2d');
+
+    // coloring context according to height
+    imageData = context.getImageData(0, 0, width, height);
+    pixels = imageData.data;
+    i = 0;
+    xx = yy = 0;
+    for (y = 0; y < height; ++y) {
+        for (x = 0; x < width; ++x) {
+            yy = ~~(y / ratio);
+            xx = ~~(x / ratio);
+            rgba = elevation2RGBA(model[yy][xx]);
+            pixels[i++] = rgba[0];
+            pixels[i++] = rgba[1];
+            pixels[i++] = rgba[2];
+            pixels[i++] = rgba[3];
+        }
+    }
+    context.putImageData(imageData, 0, 0);
+
+    texture = new THREE.Texture(
+        canvas,
+        new THREE.UVMapping(), 
+        THREE.ClampToEdgeWrapping, 
+        THREE.ClampToEdgeWrapping 
+    );
+    texture.needsUpdate = true;
+
+    return texture;
+}
+
+
+function elevation2RGBA(elevation) {
+    if (elevation > 0.5) {
+        return [255, 255, 255, 255];
+    } else if (elevation > 0){
+        return [104, 53, 20, 255]; // brown
+    } else {
+        return [58, 131, 21, 255]; // green
+    }
+}
+
+
+function drawTerrain(width, height, smoothness, maxHeight) {
     var mesh, vertices, model;
 
     model = generateTerrain(width, height, smoothness);
     mesh = getTerrainMesh(model, maxHeight);
-    mesh.scale = new THREE.Vector3(scale, scale, scale);
 
-    scene.add(terrain);
+    scene.add(mesh);
 }
 
-function getOptimalScale(terrainSize) {
-    return 30 / terrainSize;
-}
-
-function getOptimalHeight(terrainSize) {
-    return terrainSize / 32 * 200;
+function getOptimalSegLength(terrainSize) {
+    console.log(~~(600 / terrainSize));
+    return ~~(600 / terrainSize);
 }
 
 function animate(interval) {
@@ -155,15 +224,14 @@ $(function() {
     init();
     setupLights();
 
-    drawCoordinate(new THREE.Vector3(0, 0, 0), 300);
+    //drawCoordinate(new THREE.Vector3(0, 0, 0), 300);
 
     var terrainWidth = 64,
         terrainHeight = 64,
         smoothness = 1,
-        maxHeight = getOptimalHeight(Math.max(terrainWidth, terrainHeight)),
-        scale = getOptimalScale(Math.max(terrainWidth, terrainHeight));
+        maxHeight = 200;
 
-    drawTerrain(terrainWidth, terrainHeight, smoothness, maxHeight, scale);
+    drawTerrain(terrainWidth, terrainHeight, smoothness, maxHeight);
 
     animate(30);
 });
