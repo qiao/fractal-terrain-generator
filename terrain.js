@@ -261,3 +261,7 @@ var generateTerrain = (function() {
     return generateTerrain;
 
 })();
+
+if(typeof(exports) !== 'undefined' && exports !== null) {
+  exports.generateTerrain = generateTerrain;
+}
