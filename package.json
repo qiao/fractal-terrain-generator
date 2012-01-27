@@ -1,0 +1,14 @@
+{
+    "name"            : "fractal-terrain-generator"
+  , "description"     : "fractal terrain generator"
+  , "author"          : "Xueqiao Xu <xueqiaoxu@gmail.com>"
+  , "homepage"        : "https://github.com/qiao/fractal-terrain-generator"
+  , "main"            : "./index.js"
+  , "version"         : "0.0.1"
+  , "dependencies"    : { }
+  , "keywords"        : [ "fractal", "terrain", "algorithm" ]
+  , "repository"      : {
+      "type"          : "git"
+    , "url"           : "git@github.com:qiao/fractal-terrain-generator.git"
+  }
+}
