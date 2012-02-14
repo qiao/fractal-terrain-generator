@@ -1,20 +1,87 @@
-var renderer, scene, camera,
-    PI = Math.PI;
+var RandomPool = (function() {
 
-function init() {
-    var $container = $("#container"),
-        width = $container.width(),
-        height = $container.height();
+  var origRandom = Math.random;
+  var pool       = [];
+  var counter    = 0;
 
-    // set up camera
-    camera = new THREE.PerspectiveCamera(45,                     
-                              width / height, 
-                              1,
-                              5000);
-    camera.position.y = 400;
+  function next() {
+    var rand;
+    if (counter > pool.length) {
+      rand = origRandom();
+      pool.push(rand);
+    } else {
+      rand = pool[counter];
+    }
+    counter++;
+    return rand;
+  };
+
+  function seek(index) {
+    counter = index;
+  }
+
+  function reset() {
+    counter = 0;
+    pool = [];
+  }
+
+  function hook() {
+    Math.random = next;
+  }
+
+  function unhook() {
+    Math.random = origRandom;
+  }
+
+  return {
+    next         : next,
+    seek         : seek,
+    reset        : reset,
+    hook         : hook,
+    unhook       : unhook
+  };
+
+})();
+
+
+var TerrainModel = (function() {
+
+  function update(opts) {
+    var width = opts.width || 32;
+    var height = opts.height || 32;
+    var smoothness = opts.smoothness || 1.0;
+    var model = generateTerrain(width, height, smoothness);
+    $.publish('terrain-update', model);
+  }
+
+  return {
+    update: update
+  };
+
+})();
+
+var TerrainView = (function() {
+
+  var renderer;
+  var scene;
+  var camera;
+
+  function init(container) {
+
+    var $container = $(container);
+    var width = $container.width();
+    var height = $container.height();
+    var ratio = width / height;
+    var near = 1;
+    var far = 5000;
+    var fov = 45;
 
     // setup scene
     scene = new THREE.Scene();
+
+    // set up camera
+    camera = new THREE.PerspectiveCamera(fov, ratio, near, far);
+    camera.position.y = 400;
     
     // setup renderer
     if (!Detector.webgl) {
@@ -38,200 +105,199 @@ function init() {
     renderer.shadowMapEnabled = true;
     renderer.shadowMapSoft = true;
 
+    setupLights();
+
     // create graphic container and attach the renderer to it
     $container.append(renderer.domElement);
-}
 
-function setupLights() {
-    var ambientLight, mainLight, auxLight;
-    ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+
+  }
+
+
+  function setupLights() {
+    var ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
     scene.add(ambientLight);
 
-    mainLight = new THREE.SpotLight(0xffffff, 0.5);
+    var mainLight = new THREE.SpotLight(0xffffff, 0.9);
     mainLight.position.set(500, 500, 500);
     mainLight.castShadow = true;
     scene.add(mainLight);
 
-    auxLight = new THREE.SpotLight(0xffffff, 0.3);
+    var auxLight = new THREE.SpotLight(0xffffff, 0.8);
     auxLight.position.set(-300, 500, -400);
     auxLight.castShadow = true;
     scene.add(auxLight);
-}
+  }
 
-
-function getTerrainMesh(model, maxHeight) {
-    var modelWidth, modelHeight, segLength, 
-        size, vertices, texture, i, j;
+  function getTerrainMesh(model, maxHeight) {
     
-    modelWidth = model[0].length - 1; 
-    modelHeight = model.length - 1;
+    var modelWidth  = model[0].length - 1; 
+    var modelHeight = model.length - 1;
 
-    segLength = getOptimalSegLength(Math.max(modelWidth, modelHeight));
+    var segLength = getOptimalSegLength(modelWidth, modelHeight);
 
-    height = (model.length - 1) * segLength;
-    width = (model[0].length - 1) * segLength;
+    var height = (model.length - 1) * segLength;
+    var width  = (model[0].length - 1) * segLength;
 
-    texture = getTexture(model, width, height);
+    //var texture = getTexture(model, width, height);
 
-    mesh = new THREE.Mesh(
-        new THREE.PlaneGeometry(width, height, model.length - 1, model.length - 1),
-        //new THREE.MeshBasicMaterial({
-            //map: texture
-        //})
-        new THREE.MeshLambertMaterial({ 
-            color: 0x777777, 
-            wireframe: true,
-        })
+    var mesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(width, height, model.length - 1, model.length - 1),
+      //new THREE.MeshBasicMaterial({
+      //map: texture
+      //})
+      new THREE.MeshLambertMaterial({ 
+        color: 0x777777, 
+        wireframe: true,
+      })
     );
-    mesh.rotation.x = -PI / 2;
+    mesh.rotation.x = -Math.PI / 2;
     mesh.castShadow = true;
     mesh.receiveShadow = true;
 
-    vertices = mesh.geometry.vertices;
-    for (i = 0; i < model.length; ++i) {
-        for (j = 0; j < model.length; ++j) {
-            vertices[i * model.length + j].position.z = model[i][j] * maxHeight;
-        }
+    var vertices = mesh.geometry.vertices;
+    for (var i = 0; i < model.length; ++i) {
+      for (var j = 0; j < model.length; ++j) {
+        vertices[i * model.length + j].position.z = model[i][j] * maxHeight;
+      }
     }
 
     return mesh;
-}
+  }
+
+  function getOptimalSegLength(width, height) {
+    return ~~(600 / Math.max(width, height));
+  }
 
 
-// TODO: use bitmap textures and texture blending
-function getTexture(model, width, height) {
-    var canvas, context, 
-        modelWidth, modelHeight,
-        ratio,
-        texture, imageData, pixels, 
-        rgba,
-        i, j, y, x, yy, xx;
+  function drawCoordinate(center, length) {
+    var othorgonals = [
+      [new THREE.Vector3(length, 0, 0), 0xff0000],
+      [new THREE.Vector3(0, length, 0), 0x00ff00],
+      [new THREE.Vector3(0, 0, length), 0x0000ff]
+    ];
 
-    modelWidth = model[0].length - 1;
-    modelHeight = model.length;
+    for (var i = 0; i < othorgonals.length; ++i) {
+      var v = othorgonals[i][0],
+      color = othorgonals[i][1];
 
-    ratio = width / modelWidth;
+      var geometry = new THREE.Geometry();
 
-    // generate canvas
-    canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    console.log(width / modelWidth)
+      geometry.vertices.push(new THREE.Vertex(center));
+      geometry.vertices.push(new THREE.Vertex(center.clone().addSelf(v)));
 
-    // get context
-    context = canvas.getContext('2d');
+      var line = new THREE.Line(
+        geometry, 
 
-    // coloring context according to height
-    imageData = context.getImageData(0, 0, width, height);
-    pixels = imageData.data;
-    i = 0;
-    xx = yy = 0;
-    for (y = 0; y < height; ++y) {
-        for (x = 0; x < width; ++x) {
-            yy = ~~(y / ratio);
-            xx = ~~(x / ratio);
-            rgba = elevation2RGBA(model[yy][xx]);
-            pixels[i++] = rgba[0];
-            pixels[i++] = rgba[1];
-            pixels[i++] = rgba[2];
-            pixels[i++] = rgba[3];
-        }
+        new THREE.LineBasicMaterial({
+          color: color, 
+          opacity: 1, 
+          linewidth: 3
+        })
+      );
+
+      scene.add(line);
     }
-    context.putImageData(imageData, 0, 0);
+  }
 
-    texture = new THREE.Texture(
-        canvas,
-        new THREE.UVMapping(), 
-        THREE.ClampToEdgeWrapping, 
-        THREE.ClampToEdgeWrapping 
-    );
-    texture.needsUpdate = true;
+  // TODO: use bitmap textures and texture blending
+  //function getTexture(model, width, height) {
 
-    return texture;
-}
+    //var modelWidth = model[0].length - 1;
+    //var modelHeight = model.length;
+
+    //var ratio = width / modelWidth;
+
+    //// generate canvas
+    //var canvas = document.createElement('canvas');
+    //canvas.width = width;
+    //canvas.height = height;
+    //console.log(width / modelWidth)
+
+    //// get context
+    //var context = canvas.getContext('2d');
+
+    //// coloring context according to height
+    //var imageData = context.getImageData(0, 0, width, height);
+    //var pixels = imageData.data;
+    //var i = 0;
+    //var xx = 0;
+    //var yy = 0;
+    //var rgba;
+    //for (var y = 0; y < height; ++y) {
+      //for (var x = 0; x < width; ++x) {
+        //yy = ~~(y / ratio);
+        //xx = ~~(x / ratio);
+        //rgba = elevation2RGBA(model[yy][xx]);
+        //pixels[i++] = rgba[0];
+        //pixels[i++] = rgba[1];
+        //pixels[i++] = rgba[2];
+        //pixels[i++] = rgba[3];
+      //}
+    //}
+    //context.putImageData(imageData, 0, 0);
+
+    //texture = new THREE.Texture(
+      //canvas,
+      //new THREE.UVMapping(), 
+      //THREE.ClampToEdgeWrapping, 
+      //THREE.ClampToEdgeWrapping 
+    //);
+    //texture.needsUpdate = true;
+
+    //return texture;
+  //}
 
 
-function elevation2RGBA(elevation) {
-    if (elevation > 0.5) {
-        return [255, 255, 255, 255];
-    } else if (elevation > 0){
-        return [104, 53, 20, 255]; // brown
-    } else {
-        return [58, 131, 21, 255]; // green
-    }
-}
+  //function elevation2RGBA(elevation) {
+    //if (elevation > 0.5) {
+      //return [255, 255, 255, 255];
+    //} else if (elevation > 0){
+      //return [104, 53, 20, 255]; // brown
+    //} else {
+      //return [58, 131, 21, 255]; // green
+    //}
+  //}
 
-
-function drawTerrain(width, height, smoothness, maxHeight) {
-    var mesh, vertices, model;
-
-    model = generateTerrain(width, height, smoothness);
-    mesh = getTerrainMesh(model, maxHeight);
-
+  function update(evt, model) {
+    var MAX_HEIGHT = 200;
+    var mesh = getTerrainMesh(model, MAX_HEIGHT);
     scene.add(mesh);
-}
-
-function getOptimalSegLength(terrainSize) {
-    console.log(~~(600 / terrainSize));
-    return ~~(600 / terrainSize);
-}
-
-function animate(interval) {
+  }
+  
+  function animate(interval) {
     var timer = new Date().getTime() * 0.0001;
     camera.position.x = Math.cos(timer) * 800;
     camera.position.z = Math.sin(timer) * 800;
     camera.lookAt(scene.position);
-    
+
     requestAnimationFrame(animate, interval);
     renderer.render(scene, camera);
-}
+  }
 
+  return {
+    init           : init,
+    update         : update,
+    animate        : animate,
+    drawCoordinate : drawCoordinate
+  };
 
-function drawCoordinate(center, length) {
-    var othorgonals = [
-        [new THREE.Vector3(length, 0, 0), 0xff0000],
-        [new THREE.Vector3(0, length, 0), 0x00ff00],
-        [new THREE.Vector3(0, 0, length), 0x0000ff]
-    ];
+})();
 
-    for (var i = 0; i < othorgonals.length; ++i) {
-        var v = othorgonals[i][0],
-            color = othorgonals[i][1];
+$(document).ready(function() {
 
-        var geometry = new THREE.Geometry();
+  var model = TerrainModel;
+  var view  = TerrainView;
 
-        geometry.vertices.push(new THREE.Vertex(center));
-        geometry.vertices.push(new THREE.Vertex(center.clone().addSelf(v)));
+  view.init('#container');
+  view.drawCoordinate(new THREE.Vector3(0, 0, 0), 300);
 
-        var line = new THREE.Line(
-            geometry, 
+  $.subscribe('terrain-update', view.update);
+  model.update({
+    width      : 64,
+    height     : 64,
+    smoothness : 1.0
+  });
+  view.animate(30);
 
-            new THREE.LineBasicMaterial({
-                color: color, 
-                opacity: 1, 
-                linewidth: 3
-            })
-        );
-
-        scene.add(line);
-    }
-}
-
-
-
-
-$(function() {
-    init();
-    setupLights();
-
-    //drawCoordinate(new THREE.Vector3(0, 0, 0), 300);
-
-    var terrainWidth = 64,
-        terrainHeight = 64,
-        smoothness = 1,
-        maxHeight = 200;
-
-    drawTerrain(terrainWidth, terrainHeight, smoothness, maxHeight);
-
-    animate(30);
 });
