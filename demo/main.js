@@ -313,6 +313,7 @@ var TerrainView = (function() {
 
 $(document).ready(function() {
 
+  // create slider for the size selector
   fdSlider.createSlider({
     inp:document.getElementById("opt-size"),
     animation:"tween",
@@ -331,6 +332,7 @@ $(document).ready(function() {
 
   $.subscribe('terrain-update', view.update);
 
+  // replace the builtin Math.random method with the one provided by RandomPool
   RandomPool.hook();
 
   function reset() {
