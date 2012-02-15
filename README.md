@@ -3,7 +3,7 @@ Random fractal terrain generator
 
 online demo: http://qiao.github.com/fractal-terrain-generator/demo/
 
-![](http://qiao.github.com/fractal-terrain-generator/demo/screenshot.png)
+![](http://qiao.github.com/fractal-terrain-generator/screenshot.png)
 
 
 
