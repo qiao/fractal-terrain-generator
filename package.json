@@ -4,7 +4,7 @@
   , "author"          : "Xueqiao Xu <xueqiaoxu@gmail.com>"
   , "homepage"        : "https://github.com/qiao/fractal-terrain-generator"
   , "main"            : "./index.js"
-  , "version"         : "0.0.1"
+  , "version"         : "0.0.2"
   , "dependencies"    : { }
   , "keywords"        : [ "fractal", "terrain", "algorithm" ]
   , "repository"      : {
