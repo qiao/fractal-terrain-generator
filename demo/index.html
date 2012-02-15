@@ -19,7 +19,20 @@
     <div id="sidebar">
       <div id="sidebar-inner">
         <h1 id="title">Fractal Terrain Generator</h1>
-        <hr>
+
+        <div id="intro">
+          <p>
+            This is a demo of using the <b>diamond-square</b> algorithm to generate a random fractal terrain.
+          </p>
+          <p>
+            You may refer to Paul Martz's <a href="http://gameprogrammer.com/fractal.html">great article</a>
+            for a detailed description on how the algorithm works.
+          </p>
+          <p>
+            The visualization is built with <a href="https://github.com/mrdoob/three.js">Three.js</a>.
+          </p>
+        </div>
+
 
         <form id="opts">
           <label for="size">Size:</label>
@@ -39,9 +52,13 @@
 
           <label for="z-scale">Z-Scale:</label>
           <input class="opt" id="opt-z" type="text" name="z-scale" min="0" max="400" step="20" value="200"><br>
+
+          <a id="new" href="#">new</a>
         </form>
       </div>
     </div>
     <div id="container"></div>
+
+    <a href="https://github.com/qiao/fractal-terrain-generator"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://a248.e.akamai.net/assets.github.com/img/71eeaab9d563c2b3c590319b398dd35683265e85/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677261795f3664366436642e706e67" alt="Fork me on GitHub"></img></a>
   </body>
 </html>

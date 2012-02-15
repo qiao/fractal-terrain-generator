@@ -190,7 +190,7 @@ var TerrainView = (function() {
 
   
   function getOptimalSegLength(width, height) {
-    return ~~(600 / Math.max(width, height));
+    return ~~(640 / Math.max(width, height));
   }
 
 
@@ -240,7 +240,6 @@ var TerrainView = (function() {
     var canvas = document.createElement('canvas');
     canvas.width = width;
     canvas.height = height;
-    console.log(width / modelWidth)
 
     // get context
     var context = canvas.getContext('2d');
@@ -334,6 +333,11 @@ $(document).ready(function() {
 
   RandomPool.hook();
 
+  function reset() {
+    RandomPool.reset();
+    update();
+  }
+
   function update() {
     RandomPool.seek(0);
     var opts = {
@@ -341,7 +345,6 @@ $(document).ready(function() {
       smoothness : $('#opt-smoothness').val(),
       zScale     : $('#opt-z').val()
     };
-    console.log(opts)
     model.update(opts);
   }
 
@@ -350,7 +353,8 @@ $(document).ready(function() {
     model.updateZ(zScale);
   }
 
-  $('#opt-size')[0].onchange=update;
+  $('#new').on('click', function() { reset(); return false; });
+  $('#opt-size').on('change', update);
   $('#opt-smoothness').on('change', update);
   $('#opt-z').on('change', updateZ);
 
