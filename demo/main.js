@@ -6,7 +6,7 @@ var RandomPool = (function() {
 
   function next() {
     var rand;
-    if (counter > pool.length) {
+    if (counter >= pool.length) {
       rand = origRandom();
       pool.push(rand);
     } else {
@@ -17,7 +17,7 @@ var RandomPool = (function() {
   };
 
   function seek(index) {
-    counter = index;
+    counter = Math.min(index, pool.length);
   }
 
   function reset() {
@@ -46,16 +46,38 @@ var RandomPool = (function() {
 
 var TerrainModel = (function() {
 
+  var model;
+
   function update(opts) {
-    var width = opts.width || 32;
-    var height = opts.height || 32;
+    var size       = opts.size || 32;
     var smoothness = opts.smoothness || 1.0;
-    var model = generateTerrain(width, height, smoothness);
-    $.publish('terrain-update', model);
+    var zScale     = opts.zScale || 200;
+
+    model = generateTerrain(size, size, smoothness);
+    updateZ(zScale);
+  }
+
+  function updateZ(z) {
+    var width   = model[0].length;
+    var height  = model.length;
+    var terrain = [];
+
+    var i, j;
+    var row;
+    for (i = 0; i < height; ++i) {
+      row = [];
+      for (j = 0; j < width; ++j) {
+        row.push(model[i][j] * z);
+      }
+      terrain.push(row);
+    }
+
+    $.publish('terrain-update', [terrain])
   }
 
   return {
-    update: update
+    update  : update,
+    updateZ : updateZ
   };
 
 })();
@@ -65,6 +87,8 @@ var TerrainView = (function() {
   var renderer;
   var scene;
   var camera;
+
+  var mesh;
 
   function init(container) {
 
@@ -110,26 +134,25 @@ var TerrainView = (function() {
     // create graphic container and attach the renderer to it
     $container.append(renderer.domElement);
 
-
   }
 
 
   function setupLights() {
-    var ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    var ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
     scene.add(ambientLight);
 
-    var mainLight = new THREE.SpotLight(0xffffff, 0.9);
+    var mainLight = new THREE.SpotLight(0xffffff, 1.0);
     mainLight.position.set(500, 500, 500);
     mainLight.castShadow = true;
     scene.add(mainLight);
 
-    var auxLight = new THREE.SpotLight(0xffffff, 0.8);
+    var auxLight = new THREE.SpotLight(0xffffff, 1.0);
     auxLight.position.set(-300, 500, -400);
     auxLight.castShadow = true;
     scene.add(auxLight);
   }
 
-  function getTerrainMesh(model, maxHeight) {
+  function getTerrainMesh(model) {
     
     var modelWidth  = model[0].length - 1; 
     var modelHeight = model.length - 1;
@@ -158,18 +181,23 @@ var TerrainView = (function() {
     var vertices = mesh.geometry.vertices;
     for (var i = 0; i < model.length; ++i) {
       for (var j = 0; j < model.length; ++j) {
-        vertices[i * model.length + j].position.z = model[i][j] * maxHeight;
+        vertices[i * model.length + j].position.z = model[i][j];
       }
     }
 
     return mesh;
   }
 
+  
   function getOptimalSegLength(width, height) {
     return ~~(600 / Math.max(width, height));
   }
 
 
+  /**
+   * @param {THREE.Vector3} center
+   * @param {number} length
+   */
   function drawCoordinate(center, length) {
     var othorgonals = [
       [new THREE.Vector3(length, 0, 0), 0xff0000],
@@ -201,67 +229,67 @@ var TerrainView = (function() {
   }
 
   // TODO: use bitmap textures and texture blending
-  //function getTexture(model, width, height) {
+  function getTexture(model, width, height) {
 
-    //var modelWidth = model[0].length - 1;
-    //var modelHeight = model.length;
+    var modelWidth = model[0].length - 1;
+    var modelHeight = model.length;
 
-    //var ratio = width / modelWidth;
+    var ratio = width / modelWidth;
 
-    //// generate canvas
-    //var canvas = document.createElement('canvas');
-    //canvas.width = width;
-    //canvas.height = height;
-    //console.log(width / modelWidth)
+    // generate canvas
+    var canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    console.log(width / modelWidth)
 
-    //// get context
-    //var context = canvas.getContext('2d');
+    // get context
+    var context = canvas.getContext('2d');
 
-    //// coloring context according to height
-    //var imageData = context.getImageData(0, 0, width, height);
-    //var pixels = imageData.data;
-    //var i = 0;
-    //var xx = 0;
-    //var yy = 0;
-    //var rgba;
-    //for (var y = 0; y < height; ++y) {
-      //for (var x = 0; x < width; ++x) {
-        //yy = ~~(y / ratio);
-        //xx = ~~(x / ratio);
-        //rgba = elevation2RGBA(model[yy][xx]);
-        //pixels[i++] = rgba[0];
-        //pixels[i++] = rgba[1];
-        //pixels[i++] = rgba[2];
-        //pixels[i++] = rgba[3];
-      //}
-    //}
-    //context.putImageData(imageData, 0, 0);
+    // coloring context according to height
+    var imageData = context.getImageData(0, 0, width, height);
+    var pixels = imageData.data;
+    var i = 0;
+    var xx = 0;
+    var yy = 0;
+    var rgba;
+    for (var y = 0; y < height; ++y) {
+      for (var x = 0; x < width; ++x) {
+        yy = ~~(y / ratio);
+        xx = ~~(x / ratio);
+        rgba = elevation2RGBA(model[yy][xx]);
+        pixels[i++] = rgba[0];
+        pixels[i++] = rgba[1];
+        pixels[i++] = rgba[2];
+        pixels[i++] = rgba[3];
+      }
+    }
+    context.putImageData(imageData, 0, 0);
 
-    //texture = new THREE.Texture(
-      //canvas,
-      //new THREE.UVMapping(), 
-      //THREE.ClampToEdgeWrapping, 
-      //THREE.ClampToEdgeWrapping 
-    //);
-    //texture.needsUpdate = true;
+    texture = new THREE.Texture(
+      canvas,
+      new THREE.UVMapping(), 
+      THREE.ClampToEdgeWrapping, 
+      THREE.ClampToEdgeWrapping 
+    );
+    texture.needsUpdate = true;
 
-    //return texture;
-  //}
+    return texture;
+  }
 
 
-  //function elevation2RGBA(elevation) {
-    //if (elevation > 0.5) {
-      //return [255, 255, 255, 255];
-    //} else if (elevation > 0){
-      //return [104, 53, 20, 255]; // brown
-    //} else {
-      //return [58, 131, 21, 255]; // green
-    //}
-  //}
+  function elevation2RGBA(elevation) {
+    if (elevation > 0.5) {
+      return [255, 255, 255, 255];
+    } else if (elevation > 0){
+      return [104, 53, 20, 255]; // brown
+    } else {
+      return [58, 131, 21, 255]; // green
+    }
+  }
 
   function update(evt, model) {
-    var MAX_HEIGHT = 200;
-    var mesh = getTerrainMesh(model, MAX_HEIGHT);
+    scene.remove(mesh);
+    mesh = getTerrainMesh(model);
     scene.add(mesh);
   }
   
@@ -286,18 +314,46 @@ var TerrainView = (function() {
 
 $(document).ready(function() {
 
+  fdSlider.createSlider({
+    inp:document.getElementById("opt-size"),
+    animation:"tween",
+    hideInput:true,
+    callbacks: {
+      change: [update]
+    }
+  }); 
+
   var model = TerrainModel;
   var view  = TerrainView;
 
   view.init('#container');
-  view.drawCoordinate(new THREE.Vector3(0, 0, 0), 300);
+  //view.drawCoordinate(new THREE.Vector3(0, 0, 0), 300);
+  view.animate(30);
 
   $.subscribe('terrain-update', view.update);
-  model.update({
-    width      : 64,
-    height     : 64,
-    smoothness : 1.0
-  });
-  view.animate(30);
+
+  RandomPool.hook();
+
+  function update() {
+    RandomPool.seek(0);
+    var opts = {
+      size       : $('#opt-size').val(),
+      smoothness : $('#opt-smoothness').val(),
+      zScale     : $('#opt-z').val()
+    };
+    console.log(opts)
+    model.update(opts);
+  }
+
+  function updateZ() {
+    var zScale = $('#opt-z').val();
+    model.updateZ(zScale);
+  }
+
+  $('#opt-size')[0].onchange=update;
+  $('#opt-smoothness').on('change', update);
+  $('#opt-z').on('change', updateZ);
+
+  update();
 
 });

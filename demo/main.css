@@ -3,14 +3,49 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-  background-color: #000;
+  background-color: #222;
+  color: #fff;
   overflow: hidden;
 }
 
 #sidebar {
+  position: absolute;
+  width: 260px;
+  height: 100%;
+  background-color: #444;
+}
+
+#sidebar-inner {
+  padding: 10px;
+}
+
+#title {
+  width: 100%;
+  font-size: 14px;
+  text-align: center;
+}
+
+#opts {
+  margin-top: 5px;
+}
+
+#opts label {
+  margin-top: 10px;
+  width: 120px;
+  display: inline-block;
+  font-size: 14px;
+}
+
+span.fd-slider {
+  width: 100px;
+  display: inline-block;
+  top: 3px;
 }
 
 #container {
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  left: 260px;
+  top: 0px;
+  bottom: 0px;
+  right: 0px;
 }
