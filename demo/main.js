@@ -378,5 +378,3 @@ var TerrainController = (function() {
   return { init: init };
 
 })();
-
-TerrainController.init();
