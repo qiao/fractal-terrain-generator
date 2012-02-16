@@ -311,29 +311,49 @@ var TerrainView = (function() {
 
 })();
 
-$(document).ready(function() {
+var TerrainController = (function() {
 
-  // create slider for the size selector
-  fdSlider.createSlider({
-    inp:document.getElementById("opt-size"),
-    animation:"tween",
-    hideInput:true,
-    callbacks: {
-      change: [update]
-    }
-  }); 
 
   var model = TerrainModel;
   var view  = TerrainView;
 
-  view.init('#container');
-  //view.drawCoordinate(new THREE.Vector3(0, 0, 0), 300);
-  view.animate(30);
+  function init() {
+    // replace the builtin Math.random method with the one provided by RandomPool
+    RandomPool.hook();
 
-  $.subscribe('terrain-update', view.update);
+    initUI();
+    animate();
+    bindEvents();
 
-  // replace the builtin Math.random method with the one provided by RandomPool
-  RandomPool.hook();
+    update();
+  }
+
+  function initUI() {
+    // create slider for the size selector
+    fdSlider.createSlider({
+      inp:document.getElementById("opt-size"),
+      animation:"tween",
+      hideInput:true,
+      callbacks: {
+        change: [update]
+      }
+    }); 
+
+    view.init('#container');
+  }
+
+  function animate() {
+    view.animate(30);
+  }
+
+  function bindEvents() {
+    $.subscribe('terrain-update', view.update);
+
+    $('#new').on('click', function() { reset(); return false; });
+    $('#opt-size').on('change', update);
+    $('#opt-smoothness').on('change', update);
+    $('#opt-z').on('change', updateZ);
+  }
 
   function reset() {
     RandomPool.reset();
@@ -355,11 +375,8 @@ $(document).ready(function() {
     model.updateZ(zScale);
   }
 
-  $('#new').on('click', function() { reset(); return false; });
-  $('#opt-size').on('change', update);
-  $('#opt-smoothness').on('change', update);
-  $('#opt-z').on('change', updateZ);
+  return { init: init };
 
-  update();
+})();
 
-});
+TerrainController.init();
