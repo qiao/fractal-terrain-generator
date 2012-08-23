@@ -1,3 +1,4 @@
+[![build status](https://secure.travis-ci.org/qiao/fractal-terrain-generator.png)](http://travis-ci.org/qiao/fractal-terrain-generator)
 Random fractal terrain generator
 ================================
 
