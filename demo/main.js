@@ -105,7 +105,7 @@ var TerrainView = (function() {
 
     // set up camera
     camera = new THREE.PerspectiveCamera(fov, ratio, near, far);
-    camera.position.y = 400;
+    camera.y = 400;
     
     // setup renderer
     if (!Detector.webgl) {
@@ -181,7 +181,7 @@ var TerrainView = (function() {
     var vertices = mesh.geometry.vertices;
     for (var i = 0; i < model.length; ++i) {
       for (var j = 0; j < model.length; ++j) {
-        vertices[i * model.length + j].position.z = model[i][j];
+        vertices[i * model.length + j].z = model[i][j];
       }
     }
 
